@@ -1,22 +1,30 @@
+import 'package:effective_mobile_test/core/api/dio_factory.dart';
+import 'package:effective_mobile_test/core/api/rest_client.dart';
+import 'package:effective_mobile_test/core/services/storage_service.dart';
+import 'package:effective_mobile_test/ui/pages/app.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  //init service
+  final prefs = await SharedPreferences.getInstance();
+  final storageService = StorageService(prefs);
 
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const HomePage(),
-    );
-  }
+  //init repository
+  final restDio = DioFactory.newInstance();
+  final restApi = RestClient(restDio);
+
+  runApp(
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider(create: (_) => storageService, lazy: false),
+        RepositoryProvider(create: (_) => restApi, lazy: false),
+      ],
+      child: const App(),
+    ),
+  );
 }
